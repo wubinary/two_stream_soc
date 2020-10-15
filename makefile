@@ -10,7 +10,7 @@ hls:
 	source scripts/hls_cnn.sh NLR_Quantize_3 ${PART}
 
 bitstream:
-	rm -rf vivado design_1.*
+	rm -rf vivado design_1.bit design_1.hwh
 	vivado -mode batch -source scripts/two_stream_vivado.tcl -nojournal -nolog
 	rm -rf .Xil 
 	cp vivado/vivado.runs/impl_1/design_1_wrapper.bit design_1.bit
