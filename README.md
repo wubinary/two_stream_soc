@@ -3,12 +3,12 @@
 
 ## How to run
 
-#### hls cnn + bitstream
+#### run hls cnn + bitstream
 > make
 
-#### bitstream only
+#### run bitstream only
 > make bitstream
 
-#### hls cnn
+#### run hls cnn
 > make hls
 
