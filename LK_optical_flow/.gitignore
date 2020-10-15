@@ -1,0 +1,9 @@
+
+*.swp
+*.log
+
+lk.zip
+lk/
+vivado/
+vivado_104/
+
