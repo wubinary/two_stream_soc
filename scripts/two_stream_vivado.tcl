@@ -5,7 +5,7 @@ set hls_lk_impl_path LK_optical_flow/lk/solution1/impl
 # CNN HLS implement path <<<<<<<記得改路徑>>>>>>
 set hls_cnn_impl_path NLR_Quantize_3/HLS_PROJ/large/impl
 # Vivado project path <<<<<<<記得改路徑>>>>>>
-set vivado_path /home/aa/Downloads/two-stream/vivado 
+set vivado_path /media/datasets/Git/two_stream_soc/vivado 
 
 # create new project
 create_project vivado ${vivado_path} -part xczu9eg-ffvb1156-2-e -force

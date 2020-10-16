@@ -20,16 +20,20 @@ elif [ "$2" = "large" ]; then
 fi
 
 cd $HLS_ROOT 
+rm -rf $HLS_ROOT/$SCALE
 vivado_hls -f script.tcl ./ $SCALE $PART
 
 REPO_PATH=$PROJECT_PATH/repo/$SCALE
 IP_PATH=$PROJECT_PATH/$SCALE/impl/ip/xilinx_com_hls_DoCompute_1_0.zip
 
+cd ..
+
+echo $REPO_PATH
 if [ ! -d "$REPO_PATH" ]; then
 	mkdir -p $REPO_PATH
 fi
 
-cd ..
+#cd ..
 
 # unzip ip to repo
 unzip -o $IP_PATH -d $REPO_PATH
