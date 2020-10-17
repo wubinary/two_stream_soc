@@ -16,6 +16,36 @@ def make_layers(config, in_channel=3, accelerator=None):
 
     layers = []
     #Conv(output channel, input channel, input height, input width, kerSize, stride)
+    layers += [fpga_nn.Conv2DPool(32, in_channel, in_height, in_width, ker = 3, poolWin = 2, accelerator=acc)]
+
+    layers += [fpga_nn.Conv2DPool(64, 32, int(in_height/2), int(in_width/2), ker = 3, poolWin = 2, accelerator=acc)]
+
+    layers += [fpga_nn.Conv2DPool(64, 64, int(in_height/4), int(in_width/4), ker = 3, poolWin = 2, accelerator=acc)]
+    
+    layers += [fpga_nn.Conv2DPool(64, 64, int(in_height/8), int(in_width/8), ker = 3, poolWin = 2, accelerator=acc)]
+
+    layers += [fpga_nn.Conv2DPool(64, 64, int(in_height/16), int(in_width/16), ker = 3, poolWin = 2, accelerator=acc)]
+
+    layers += [fpga_nn.Conv2DPool(64, 64, int(in_height/32), int(in_width/32), ker = 3, poolWin = 2, accelerator=acc)]
+
+    # conv output size = (8,8,512)
+    layers += [fpga_nn.Flatten(int(in_height/64), int(in_width/64), 64)]
+    layers += [fpga_nn.Linear(512,int(in_height/64)*int(in_width/64)*64)]
+    layers += [fpga_nn.Linear(101,512)]
+
+    return layers
+
+def make_layers_old(config, in_channel=3, accelerator=None):
+    assert config is not None    
+    in_height = int(config["DataConfig"]["image_height"])
+    in_width = int(config["DataConfig"]["image_width"])
+    in_channel = in_channel
+
+    assert accelerator is not None
+    acc = accelerator
+
+    layers = []
+    #Conv(output channel, input channel, input height, input width, kerSize, stride)
     layers += [fpga_nn.Conv2D(64, in_channel, in_height, in_width, ker = 3, s = 1, accelerator=acc)]
     layers += [fpga_nn.Conv2DPool(128, 64, in_height, in_width, ker = 3, poolWin = 2, accelerator=acc)]
 
