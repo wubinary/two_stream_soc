@@ -88,6 +88,18 @@ class SimpleNet(CNN_accelerator):
         for l in self.layers:
             if l.type == "conv" or l.type == "linear":
                 l.weight_data = np.random.randint(256,size=l.weight_shape, dtype=np.uint8)
+
+class Cifar10SimpleNet(CNN_accelerator):
+    def __init__(self, config, layers, params_path = None):
+        super(SimpleNet, self).__init__(config)
+        self.layers = layers
+        self.params_path = params_path
+
+        # initialize weight for each layer
+        self.init_weight(params_path= params_path)
+
+        # copy weight data to hardware buffer 
+        self.load_parameters();
                 
 def simple_net(config, accelerator):
     layers = make_layers(config, in_channel=3, accelerator=accelerator)
@@ -99,4 +111,10 @@ def simple_net_2(config, accelerator):
     layers = make_layers(config, in_channel=32, accelerator=accelerator)
     params_path = "params.path"
     model = SimpleNet(config, layers, params_path = params_path)
+    return model
+
+def cifar10_simple_net(model_path, config, accelerator):
+    layers = make_layers(config, in_channel=3, accelerator=accelerator)
+    params_path = model_path
+    model = Cifar10SimpleNet(config, layers, params_path = params_path)
     return model

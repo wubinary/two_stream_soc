@@ -1,0 +1,17 @@
+＃第一層 conv 的 input 也就是 quantized 的 圖片
+feature_map['conv1_input'] = conv1_input.cpu().detach().numpy()
+＃第二層 conv 的 input 也就是 第一層 conv1 的 output (conv+maxpooling)
+feature_map['conv2_input'] = conv2_input.cpu().detach().numpy()
+feature_map['conv3_input'] = conv3_input.cpu().detach().numpy()
+feature_map['conv4_input'] = conv4_input.cpu().detach().numpy()
+feature_map['conv5_input'] = conv5_input.cpu().detach().numpy()
+feature_map['conv5_output'] = conv5_output.cpu().detach().numpy()
+
+
+＃conv1 的 需要quantize的值 以此類推
+weight_scale_zero['conv1']['qweight']
+weight_scale_zero['conv1']['scale'] 
+weight_scale_zero['conv1']['w_zeropoint'] 
+weight_scale_zero['conv1']['x_zeropoint'] 
+weight_scale_zero['conv1']['xnext_zeropoint'] 
+

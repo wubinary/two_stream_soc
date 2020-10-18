@@ -182,8 +182,9 @@ class CNN_accelerator(object):
         self.core0.write(0x30, int(in_width))
         self.core0.write(0x38, int(in_channel))
         self.core0.write(0x40, int(out_channel))
-        self.core0.write(0x48, self.Tr)
-        self.core0.write(0x50, self.Tc)
+        # TODO: when input size < 3, this might cause little result
+        self.core0.write(0x48, self.Tr if in_height > self.Tr else int(in_height) if in_height > 4 else 4)
+        self.core0.write(0x50, self.Tc if in_width > self.Tc else int(in_width) if in_width > 4 else 4)
         self.core0.write(0x58, ker)
         self.core0.write(0x60, s)
         self.core0.write(0x68, poolWin)

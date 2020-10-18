@@ -39,7 +39,7 @@ class Conv2D(CNN_accelerator):
             , max(in_channel, self.Ti), self.out_height, self.out_width, ker)
 
     def __call__(self, ifm_buff):
-        print("executing conv2d")
+        # print("executing conv2d")
         self.ifm_buff = ifm_buff
         self.accelerator.setting(self.ofm_buff,\
                                  self.ifm_buff,\
@@ -91,7 +91,7 @@ class Conv2DPool(CNN_accelerator):
                 , max(in_channel, self.Ti), self.out_height, self.out_width, ker)
 
     def __call__(self, ifm_buff):
-        print("executing conv2dPool")
+        # print("executing conv2dPool")
         self.ifm_buff = ifm_buff
         self.accelerator.setting(self.ofm_buff,\
                                  self.ifm_buff,\
@@ -136,7 +136,7 @@ class Linear(CNN_accelerator):
         #   , max(in_channel, self.Ti), self.out_height, self.out_width, self.ker)
 
     def __call__(self, feature):
-        print("executing Fully Connected Layer")
+        # print("executing Fully Connected Layer")
         # feature: (1, in_channel * in_height * in_width)
         # wgt: (out_channel, in_channel * in_height * in_width)
         if self.quantize:
@@ -164,7 +164,7 @@ class Flatten(CNN_accelerator):
         # self.tile_depth = int(in_height*in_width)
 
     def __call__(self, feature_buff):
-        print("executing Flatten")
+        # print("executing Flatten")
         # convert to row major feature map(channel, height, width)
         return co.convertOFMOutput(\
                 feature_buff, feature_buff.shape[0], self.WORD_LENGTH\
