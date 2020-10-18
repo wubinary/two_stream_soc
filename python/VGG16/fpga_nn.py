@@ -6,7 +6,10 @@ from VGG16.accelerator import CNN_accelerator
 import VGG16.conv_operation as co
 
 class Conv2D(CNN_accelerator):
-    def __init__(self, out_channel, in_channel, in_height, in_width, ker=3, s=1, accelerator=None, config=None):
+    def __init__(self, out_channel, in_channel, in_height, in_width,\
+        multiplier=1, zp_x=0, zp_w=0, zp_x_next=0,\
+        ker=3, s=1, accelerator=None, config=None):
+
         assert accelerator is not None
         super(Conv2D, self).__init__(config)
 
@@ -23,6 +26,13 @@ class Conv2D(CNN_accelerator):
         self.weight_data = None
         
         self.accelerator = accelerator
+
+        self.multiplier = multiplier
+        self.zp_x = zp_x
+        self.zp_w = zp_w
+        self.zp_x_next = zp_x_next
+
+        self.quantize = True
         
         self.ofm_buff, self.wgt_buff = \
             self.accelerator.mem_alloc(max(out_channel, self.To)\
@@ -38,13 +48,19 @@ class Conv2D(CNN_accelerator):
                                  self.in_channel,\
                                  self.in_height,\
                                  self.in_width,\
+                                 self.multiplier,\
+                                 self.zp_x,\
+                                 self.zp_w,\
+                                 self.zp_x_next,\
                                  self.ker,\
                                  self.s)
         self.accelerator.execute()
         return self.ofm_buff
 
 class Conv2DPool(CNN_accelerator):
-    def __init__(self, out_channel, in_channel, in_height, in_width, ker=3, s=1, poolWin = 2, accelerator=None, config=None):
+    def __init__(self, out_channel, in_channel, in_height, in_width,\
+        multiplier=1, zp_x=0, zp_w=0, zp_x_next=0,\
+        ker=3, s=1, poolWin = 2, accelerator=None, config=None):
         assert accelerator is not None
         super(Conv2DPool, self).__init__(config)
 
@@ -62,6 +78,13 @@ class Conv2DPool(CNN_accelerator):
         self.weight_data = None
         
         self.accelerator = accelerator
+
+        self.multiplier = multiplier
+        self.zp_x = zp_x
+        self.zp_w = zp_w
+        self.zp_x_next = zp_x_next
+
+        self.quantize = True
         
         self.ofm_buff, self.wgt_buff = \
             self.accelerator.mem_alloc(max(out_channel, self.To)\
@@ -77,12 +100,17 @@ class Conv2DPool(CNN_accelerator):
                                  self.in_channel,\
                                  self.in_height,\
                                  self.in_width,\
+                                 self.multiplier,\
+                                 self.zp_x,\
+                                 self.zp_w,\
+                                 self.zp_x_next,\
                                  poolWin = self.poolWin)
         self.accelerator.execute()
         return self.ofm_buff
     
 class Linear(CNN_accelerator):
-    def __init__(self, out_channel, in_channel):
+    def __init__(self, out_channel, in_channel,\
+        multiplier=1, zp_x=0, zp_w=0, zp_x_next=0, quantize=True):
         super(Linear, self).__init__()
 
         self.type = "linear"
@@ -96,6 +124,13 @@ class Linear(CNN_accelerator):
         self.weight_shape = (out_channel, in_channel, 1, 1)
         self.weight_data = None
 
+        self.multiplier = multiplier
+        self.zp_x = zp_x
+        self.zp_w = zp_w
+        self.zp_x_next = zp_x_next
+
+        self.quantize = quantize
+
         # self.ofm_buff, self.wgt_buff = \
         # self.mem_alloc(max(out_channel, self.To)\
         #   , max(in_channel, self.Ti), self.out_height, self.out_width, self.ker)
@@ -104,7 +139,13 @@ class Linear(CNN_accelerator):
         print("executing Fully Connected Layer")
         # feature: (1, in_channel * in_height * in_width)
         # wgt: (out_channel, in_channel * in_height * in_width)
-        return co.sw_linear(feature, self.weight_data)
+        if self.quantize:
+            return co.sw_linear_quant(feature, self.weight_data, \
+                self.multiplier, self.zp_x, self.zp_w, self.zp_x_next)
+        else:
+            # dequantize
+            deq_feature = self.multiplier*(feature.astype(np.float32)-self.zp_x)
+            return co.sw_linear(deq_feature, self.weight_data)
 
 class Flatten(CNN_accelerator):
     def __init__(self, in_height, in_width, in_channel):

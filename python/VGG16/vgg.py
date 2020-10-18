@@ -78,13 +78,13 @@ class SimpleNet(CNN_accelerator):
         self.params_path = params_path
 
         # initialize weight for each layer
-        self._init_weight()
+        self.init_weight(params_path= params_path)
 
         # copy weight data to hardware buffer 
         self.load_parameters();
 
     # TODO: load from parameter file
-    def _init_weight(self, params_path = None):
+    def init_weight(self, params_path = None):
         for l in self.layers:
             if l.type == "conv" or l.type == "linear":
                 l.weight_data = np.random.randint(256,size=l.weight_shape, dtype=np.uint8)

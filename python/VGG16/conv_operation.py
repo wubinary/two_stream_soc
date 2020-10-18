@@ -135,7 +135,14 @@ def sw_flatten(ifm):
 # flatten_ifm: (in_channel, 1)
 # wgt shape:(out_channel, in_channel, 1, 1)
 def sw_linear(ifm, wgt):
-    return wgt[:,:,0,0].dot(ifm)
+    return wgt.astype(np.float32).dot(ifm.astype(np.float32))
+
+def sw_linear_quant(ifm, wgt, multiplier, zp_x, zp_w, zp_x_next):
+    
+    output = ((wgt.astype(np.float32)-zp_w).dot((ifm.astype(np.float32)-zp_x)))*multiplier + zp_x_next
+    # output = multiplier*np.dot((ifm-zp_x),np.transpose((wgt[:,:,0,0]-zp_w), (1,0)) )+znx
+    output = np.round(np.clip(output,0,255)).astype(np.uint8)
+    return output
 
 
 # linear array to row major

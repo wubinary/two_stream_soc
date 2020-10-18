@@ -1,4 +1,4 @@
-import time, configparser
+import time, configparser, struct
 import numpy as np
 
 from math import floor, ceil
@@ -166,12 +166,14 @@ class CNN_accelerator(object):
         # ifm_buff = xlnk.cma_array(shape=(ifm_depth, self.WORD_LENGTH), dtype=np.uint8)
         fm_buff = xlnk.cma_array(shape=(fm_depth, self.WORD_LENGTH), dtype=np.uint8)
         wgt_buff = xlnk.cma_array(shape=(wgt_depth, self.WORD_LENGTH), dtype=np.uint8)
-        #print("memory allocation...: done")
+        print("memory allocation...: done")
 
         return fm_buff, wgt_buff
 
-    def setting(self, ofm_buff, ifm_buff, wgt_buff,
-                out_channel, in_channel, in_height, in_width, ker=3, s=1, poolWin=1):
+    def setting(self, ofm_buff, ifm_buff, wgt_buff,\
+     out_channel, in_channel, in_height, in_width,\
+     multiplier, zp_x, zp_w, zp_x_next,\
+     ker=3, s=1, poolWin=1):
 
         self.core0.write(0x10, ifm_buff.physical_address)
         self.core0.write(0x18, ofm_buff.physical_address)
@@ -185,6 +187,10 @@ class CNN_accelerator(object):
         self.core0.write(0x58, ker)
         self.core0.write(0x60, s)
         self.core0.write(0x68, poolWin)
+        self.core0.write(0x70, float_to_byte(multiplier))
+        self.core0.write(0x78, zp_x)
+        self.core0.write(0x80, zp_w)
+        self.core0.write(0x88, zp_x_next)
         
     def execute(self):
         self.core0.write(0x00, 1)
@@ -192,6 +198,27 @@ class CNN_accelerator(object):
 
         while( isready == 1 ):
             isready = self.core0.read(0x00)
+
+    def init_weight(self, param_path):
+        stat_dict = pickle.load(open(param_path, "rb"))
+        param_list = list(stat_dict.values())
+
+        l_idx = 0
+        for l in self.layers:
+            if l.type not in ['conv', 'linear']:
+                continue
+            if l.quantize is True:
+                l.weight_data = param_list[l_idx]['qweight'].astype(np.uint8)
+                l.multiplier = param_list[l_idx]['scale']
+                l.zp_x = param_list[l_idx]['x_zeropoint']
+                l.zp_w = param_list[l_idx]['w_zeropoint']
+                l.zp_x_next = param_list[l_idx]['xnext_zeropoint']
+            else:
+                l.weight_data = param_list[l_idx]['qweight']
+                l.multiplier = param_list[l_idx]['x_scale']
+                l.zp_x = param_list[l_idx]['x_zeropoint']
+                
+            l_idx+=1
             
     def load_parameters(self):
         if self.layers is None:
@@ -209,16 +236,32 @@ class CNN_accelerator(object):
 
         return 0
     
+    """
+    raw_image: 
+        1. img_channel < Ti: channel major, append 0
+        2. img_channel > Ti and  img_channel % Ti == 0: 
+            channel major
+        3. 
+    """
     def _convert_raw_image_to_buffer(self, raw_image):
+
         imgH = raw_image.shape[0]
         imgW = raw_image.shape[1]
         img_channel = raw_image.shape[2]
         
-        if img_channel < self.Ti:
+        if img_channel < self.WORD_LENGTH:
             zero_padding = np.zeros((imgH, imgW, self.Ti-img_channel), dtype = np.uint8)
             raw_image = np.concatenate((raw_image, zero_padding), axis = 2)
 
-        np.copyto(self.input_buff, raw_image.reshape(-1,raw_image.shape[2]))
+        if img_channel > self.WORD_LENGTH and (img_channel % self.WORD_LENGTH != 0):
+            zero_padding = np.zeros((imgH, imgW, self.WORD_LENGTH-(img_channel % self.WORD_LENGTH)), dtype = np.uint8)
+            raw_image = np.concatenate((raw_image, zero_padding), axis = 2)
+
+        raw_image = np.transpose(raw_image.reshape((imgH, imgW, int(raw_image.shape[2]/self.Ti), self.Ti)), (2,0,1,3))\
+                    .reshape((int(raw_image.shape[2]/self.Ti), imgH, imgW, int((self.Ti/self.WORD_LENGTH)), self.WORD_LENGTH))\
+                    .reshape(-1, self.WORD_LENGTH)
+
+        np.copyto(self.input_buff, raw_image)
         
     """
     Convert pytorch WGT to Xlnk input
@@ -245,10 +288,10 @@ class CNN_accelerator(object):
 
         print("shape of wgt: ", wgt.shape)
         wgt_tmp = np.transpose(\
-            wgt.reshape((int(ceil(out_channel/self.To)), self.To, int(ceil(in_channel/self.Ti)), self.Ti, kerH, kerW)), \
-                (0,2,1,4,5,3))\
-                .reshape((int(ceil(out_channel/self.To)), int(ceil(in_channel/self.Ti)), self.To, kerH, kerW,int(self.Ti/self.WORD_LENGTH),self.WORD_LENGTH))\
-                .reshape(-1,self.WORD_LENGTH)
+                    wgt.reshape((int(ceil(out_channel/self.To)), self.To, int(ceil(in_channel/self.Ti)), self.Ti, kerH, kerW)), \
+                        (0,2,1,4,5,3))\
+                    .reshape((int(ceil(out_channel/self.To)), int(ceil(in_channel/self.Ti)), self.To, kerH, kerW,int(self.Ti/self.WORD_LENGTH),self.WORD_LENGTH))\
+                    .reshape(-1,self.WORD_LENGTH)
 
         np.copyto(layer.wgt_buff, wgt_tmp)
            
