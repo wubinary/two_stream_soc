@@ -45,7 +45,7 @@ void DoCompute(
 	uintTi wgt[MAX_KERNEL_SIZE][MAX_KERNEL_SIZE][To];
 
 	psum_t psum_output[MAX_TILE_OUT_HEIGHT][MAX_TILE_OUT_WIDTH][To];
-#pragma HLS ARRAY_PARTITION variable=psum_output complete dim=3
+#pragma HLS ARRAY_RESHAPE variable=psum_output complete dim=3
 
 	int tileNumX = divide_ceil(inCol, Tc*stride);
 	int tileNumY = divide_ceil(inRow, Tr*stride);
@@ -249,7 +249,7 @@ void WriteOutput(
 	int wordOffset = offset;
 
 	psum_t buffer[To];
-#pragma HLS ARRAY_PARTITION variable=buffer dim=0 complete
+#pragma HLS ARRAY_RESHAPE variable=buffer dim=0 complete
 
 	if(poolWin == 1){
 		// for the current tile
