@@ -1,9 +1,11 @@
 
 from math import floor, ceil
+import numpy as np
 
 ## our define
 from VGG16.accelerator import CNN_accelerator
 import VGG16.conv_operation as co
+
 
 class Conv2D(CNN_accelerator):
     def __init__(self, out_channel, in_channel, in_height, in_width,\

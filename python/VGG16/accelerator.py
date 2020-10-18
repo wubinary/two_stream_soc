@@ -1,4 +1,4 @@
-import time, configparser, struct
+import time, configparser, struct, pickle
 import numpy as np
 
 from math import floor, ceil
@@ -92,7 +92,6 @@ class LK_accelerator(object):
 ###############################################################################################################
 
 class CNN_accelerator(object):
-        
     def __init__(self, config=None, hardware_instance=None):
         
         self.read_config(config)
@@ -107,6 +106,7 @@ class CNN_accelerator(object):
             
     def read_config(self, config):
         if config is None:
+#             print("Initialize configuration...") 
             config = configparser.ConfigParser()
             config.read('./files/config.config')
             
@@ -125,7 +125,7 @@ class CNN_accelerator(object):
 
         self.WORD_LENGTH = int(ceil(self.data_width/self.precision))
         self.buffer_depth = int(ceil((self.img_channel*self.img_height*self.img_width)/self.WORD_LENGTH))
-        print("Initialize configuration...: done") 
+#         print("Initialize configuration...: done") 
         
     def __call__(self, raw_image):
         self._convert_raw_image_to_buffer(raw_image)
@@ -174,6 +174,9 @@ class CNN_accelerator(object):
      out_channel, in_channel, in_height, in_width,\
      multiplier, zp_x, zp_w, zp_x_next,\
      ker=3, s=1, poolWin=1):
+        
+        def float_to_byte(f):
+            return struct.pack('f', f)
 
         self.core0.write(0x10, ifm_buff.physical_address)
         self.core0.write(0x18, ofm_buff.physical_address)
@@ -206,6 +209,7 @@ class CNN_accelerator(object):
 
         l_idx = 0
         for l in self.layers:
+#             print("l_idx = ", l_idx, ", l.type = ", l.type)
             if l.type not in ['conv', 'linear']:
                 continue
             if l.quantize is True:

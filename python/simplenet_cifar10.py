@@ -5,25 +5,59 @@ import numpy as np
 from pynq import Overlay
 from pynq import Xlnk
 
+import VGG16.fpga_nn as fpga_nn
 from VGG16.accelerator import CNN_accelerator
-from VGG16.vgg import cifar10_simple_net
-
-config_path = './files/config.config'
-config = configparser.ConfigParser()   
-config.read(config_path)
-
-overlay = Overlay(config["FPGAConfig"]["bitstream_path"])
-
-(in_height, in_width, in_channel) = \
-        (int(config["DataConfig"]["image_height"]),int(config["DataConfig"]["image_width"]),3)
-
-cnn_acc0 = CNN_accelerator(config, overlay.DoCompute_0)
-
-cifar10_model = cifar10_simple_net(config, cnn_acc0)
-
-cifar10_classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
 
+def make_layers(config, in_channel=3, accelerator=None):
+    assert config is not None    
+    in_height = int(config["DataConfig"]["image_height"])
+    in_width = int(config["DataConfig"]["image_width"])
+    in_channel = in_channel
+
+    assert accelerator is not None
+    acc = accelerator
+
+    layers = []
+    #Conv(output channel, input channel, input height, input width, kerSize, stride)
+    layers += [fpga_nn.Conv2DPool(32, in_channel, in_height, in_width, ker = 3, poolWin = 2, accelerator=acc)]
+
+    layers += [fpga_nn.Conv2DPool(64, 32, int(in_height/2), int(in_width/2), ker = 3, poolWin = 2, accelerator=acc)]
+
+    layers += [fpga_nn.Conv2DPool(64, 64, int(in_height/4), int(in_width/4), ker = 3, poolWin = 2, accelerator=acc)]
+    
+    layers += [fpga_nn.Conv2DPool(64, 64, int(in_height/8), int(in_width/8), ker = 3, poolWin = 2, accelerator=acc)]
+
+    layers += [fpga_nn.Conv2DPool(64, 64, int(in_height/16), int(in_width/16), ker = 3, poolWin = 2, accelerator=acc)]
+
+#     layers += [fpga_nn.Conv2DPool(64, 64, int(in_height/32), int(in_width/32), ker = 3, poolWin = 2, accelerator=acc)]
+
+    # conv output size = (8,8,512)
+    layers += [fpga_nn.Flatten(int(in_height/32), int(in_width/32), 64)]
+    layers += [fpga_nn.Linear(512,int(in_height/32)*int(in_width/32)*64)]
+    layers += [fpga_nn.Linear(101,512, quantize = False)]
+
+    return layers
+
+class Cifar10SimpleNet(CNN_accelerator):
+    def __init__(self, config, layers, params_path = None):
+        super(Cifar10SimpleNet, self).__init__(config)
+        self.layers = layers
+        self.params_path = params_path
+
+        # initialize weight for each layer
+        self.init_weight(params_path)
+
+        # copy weight data to hardware buffer 
+        self.load_parameters();
+
+
+def cifar10_simple_net(model_path, config, accelerator):
+    layers = make_layers(config, in_channel=3, accelerator=accelerator)
+    params_path = model_path
+    model = Cifar10SimpleNet(config, layers, params_path = params_path)
+    return model        
+        
 def numpy_quantize_tensor_scale_zeropoint(x, num_bits=8, scale=None, zeropoint=None):
     
     qmin = 0.
@@ -52,3 +86,26 @@ def inference(img):
     output = cifar10_model(x)
 #     print(output)
     return cifar10_classes[np.argmax(output)]
+
+
+config_path = './files/config.config'
+model_path = './files/params/lx5/model.pickle'
+config = configparser.ConfigParser()   
+config.read(config_path)
+
+overlay = Overlay(config["FPGAConfig"]["bitstream_path"])
+
+config["DataConfig"]["image_height"] = '32'
+config["DataConfig"]["image_width"] = '32'
+
+(in_height, in_width, in_channel) = \
+        (int(config["DataConfig"]["image_height"]),int(config["DataConfig"]["image_width"]),3)
+
+cifar10_classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+#########################################################################
+cnn_acc0 = CNN_accelerator(config, overlay.DoCompute_0)
+
+cifar10_model = cifar10_simple_net(model_path, config, cnn_acc0)
+
+#########################################################################
