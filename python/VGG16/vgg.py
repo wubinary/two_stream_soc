@@ -26,11 +26,11 @@ def make_layers(config, in_channel=3, accelerator=None):
 
     layers += [fpga_nn.Conv2DPool(64, 64, int(in_height/16), int(in_width/16), ker = 3, poolWin = 2, accelerator=acc)]
 
-#     layers += [fpga_nn.Conv2DPool(64, 64, int(in_height/32), int(in_width/32), ker = 3, poolWin = 2, accelerator=acc)]
+    layers += [fpga_nn.Conv2DPool(64, 64, int(in_height/32), int(in_width/32), ker = 3, poolWin = 2, accelerator=acc)]
 
     # conv output size = (8,8,512)
-    layers += [fpga_nn.Flatten(int(in_height/32), int(in_width/32), 64)]
-    layers += [fpga_nn.Linear(512,int(in_height/32)*int(in_width/32)*64)]
+    layers += [fpga_nn.Flatten(int(in_height/64), int(in_width/64), 64)]
+    layers += [fpga_nn.Linear(512,int(in_height/64)*int(in_width/64)*64)]
     layers += [fpga_nn.Linear(101,512, quantize = False)]
 
     return layers

@@ -123,7 +123,7 @@ class Linear(CNN_accelerator):
         self.out_height = 1
         self.out_width = 1
         self.ker = 1
-        self.weight_shape = (out_channel, in_channel, 1, 1)
+        self.weight_shape = (out_channel, in_channel)
         self.weight_data = None
 
         self.multiplier = multiplier
