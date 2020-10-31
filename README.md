@@ -11,7 +11,7 @@
 
 
 ## two-stream system
-![](https://i.imgur.com/nBRt57L.png)
+![](https://i.imgur.com/BMqebcv.gif)
 
 ## How to run
 
