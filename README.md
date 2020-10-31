@@ -6,8 +6,9 @@
 * soc: [wubinary](https://github.com/wubinary) 0.01%
 
 ## Youtube Demo video
+[youtube link](https://youtu.be/jTQxzhYSQKI)
 [![IMAGE ALT TEXT](https://img.youtube.com/vi/jTQxzhYSQKI/0.jpg)](https://youtu.be/jTQxzhYSQKI "two stream action recognition demo")
-![demo gif](http://lab.wubinray.com/two_stream/two_stream_demo.gif)
+
 
 ## two-stream system
 ![](https://i.imgur.com/nBRt57L.png)
