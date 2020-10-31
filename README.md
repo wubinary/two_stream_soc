@@ -5,6 +5,8 @@
 * cnn acc: [JiaMingLin](https://github.com/JiaMingLin) 49%
 * soc: [wubinary](https://github.com/wubinary) 2%
 
+![](https://i.imgur.com/641dvMx.png)
+
 ## two-stream system
 ![](https://i.imgur.com/nBRt57L.png)
 
