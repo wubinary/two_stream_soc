@@ -5,8 +5,8 @@
 * cnn acc: [JiaMingLin](https://github.com/JiaMingLin) 50%
 * soc: [wubinary](https://github.com/wubinary) 0.01%
 
-[![IMAGE ALT TEXT](https://youtu.be/jTQxzhYSQKI/0.jpg)](https://youtu.be/jTQxzhYSQKI "two stream action recognition demo")
-
+## Youtube Demo video
+[![IMAGE ALT TEXT](https://img.youtube.com/vi/jTQxzhYSQKI/0.jpg)](https://youtu.be/jTQxzhYSQKI "two stream action recognition demo")
 ![demo gif](http://lab.wubinray.com/two_stream/two_stream_demo.gif)
 
 ## two-stream system
