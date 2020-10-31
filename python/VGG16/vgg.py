@@ -1,7 +1,12 @@
+import sys
 import configparser
 import numpy as np
 
+from pynq import Overlay
+from pynq import Xlnk
+
 ### our define
+sys.path.append('../')
 import VGG16.fpga_nn as fpga_nn
 from VGG16.accelerator import CNN_accelerator
 
@@ -96,8 +101,29 @@ def simple_net(config, accelerator):
     return model
 
 def simple_net_2(config, accelerator):
-    layers = make_layers(config, in_channel=32, accelerator=accelerator)
+    layers = make_layers(config, in_channel=20, accelerator=accelerator)
     params_path = "params.path"
     model = SimpleNet(config, layers, params_path = params_path)
     return model
 
+if __name__ == "__main__":
+
+    config_path = './files/config.config'
+    model_path = './files/params/ucf101_vgg7/model.pickle'
+
+    config = configparser.ConfigParser()   
+    config.read(config_path)
+
+    overlay = Overlay('../files/design_1.bit')
+
+    (in_height, in_width, in_channel) = \
+        (256,256,20)
+
+    cnn_acc0 = CNN_accelerator(config, overlay.DoCompute_0)
+
+    vgg7_model = simple_net_2(config, cnn_acc0)
+
+    x = np.random.randint(256,size=(in_height, in_width, in_channel), dtype=np.uint8)
+
+    y = vgg7_model(x)
+    

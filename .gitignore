@@ -2,8 +2,8 @@
 python/LK_optical_flow/files/output
 
 *.dat
-*/.ipynb_checkpoints
-*/__pycache__
+.ipynb_checkpoints
+__pycache__
 
 vivado/
 

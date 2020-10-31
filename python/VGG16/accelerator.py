@@ -92,9 +92,9 @@ class LK_accelerator(object):
 ###############################################################################################################
 
 class CNN_accelerator(object):
-    def __init__(self, config=None, hardware_instance=None):
+    def __init__(self, config=None, hardware_instance=None, is_spatial=False):
         
-        self.read_config(config)
+        self.read_config(config, is_spatial)
         
         if hardware_instance is not None:
             self.core0 = hardware_instance
@@ -104,7 +104,7 @@ class CNN_accelerator(object):
             shape=(self.buffer_depth, self.WORD_LENGTH),
             dtype=np.uint8)
             
-    def read_config(self, config):
+    def read_config(self, config, is_spatial):
         if config is None:
 #             print("Initialize configuration...") 
             config = configparser.ConfigParser()
@@ -121,10 +121,18 @@ class CNN_accelerator(object):
 
         self.img_height = int(config["DataConfig"]["image_height"])
         self.img_width = int(config["DataConfig"]["image_width"])
-        self.img_channel = int(config["DataConfig"]["image_channel"])
+        if is_spatial:
+            self.img_channel = 16
+        else:
+            self.img_channel = int(config["DataConfig"]["image_channel"])
 
         self.WORD_LENGTH = int(ceil(self.data_width/self.precision))
+        
+        if (self.img_channel > self.Ti) and (self.img_channel % self.Ti != 0):
+            self.img_channel += self.Ti - (self.img_channel % self.Ti)
+
         self.buffer_depth = int(ceil((self.img_channel*self.img_height*self.img_width)/self.WORD_LENGTH))
+        print("\t[Info] buff depth",self.buffer_depth)
 #         print("Initialize configuration...: done") 
         
     def __call__(self, raw_image):
@@ -159,6 +167,9 @@ class CNN_accelerator(object):
         # ifm_depth = int(ceil((in_channel*in_height*in_width)/self.WORD_LENGTH))
         if (out_channel % self.To != 0):
             out_channel += self.To - (out_channel % self.To)
+
+        if (in_channel > self.Ti) and (in_channel % self.Ti != 0):
+            in_channel += self.Ti - (in_channel % self.Ti)
 
         fm_depth = int(ceil((out_channel*in_height*in_width)/self.WORD_LENGTH))
         wgt_depth = int(ceil((in_channel*out_channel*ker*ker)/self.WORD_LENGTH))
@@ -249,6 +260,7 @@ class CNN_accelerator(object):
         3. 
     """
     def _convert_raw_image_to_buffer(self, raw_image):
+        print("input image shape",raw_image.shape)
 
         imgH = raw_image.shape[0]
         imgW = raw_image.shape[1]
@@ -265,7 +277,8 @@ class CNN_accelerator(object):
         raw_image = np.transpose(raw_image.reshape((imgH, imgW, int(raw_image.shape[2]/self.Ti), self.Ti)), (2,0,1,3))\
                     .reshape((int(raw_image.shape[2]/self.Ti), imgH, imgW, int((self.Ti/self.WORD_LENGTH)), self.WORD_LENGTH))\
                     .reshape(-1, self.WORD_LENGTH)
-
+        
+        print(self.input_buff.shape, raw_image.shape)
         np.copyto(self.input_buff, raw_image)
         
     """
@@ -287,9 +300,12 @@ class CNN_accelerator(object):
             zero_padding = np.zeros((out_channel,self.Ti - in_channel,kerH,kerW), dtype=np.uint8)
             wgt = np.concatenate((wgt,zero_padding), axis = 1)
 
-        # if (out_channel % self.To != 0):
-        #   zero_padding = np.zeros((self.To - (out_channel % self.To),in_channel,kerH,kerW), dtype=np.uint8)
-        #   wgt = np.concatenate((wgt,zero_padding), axis = 0)
+        # padding to multiple of 16
+        if (in_channel > self.Ti) and (in_channel % self.Ti != 0):
+            # (out_channel, in_channel, ker, ker)
+            num_res = self.Ti - (in_channel % self.Ti)
+            zero_padding = np.zeros((out_channel, num_res,kerH,kerW), dtype=np.uint8)
+            wgt = np.concatenate((wgt,zero_padding), axis = 1)
 
         print("shape of wgt: ", wgt.shape)
         wgt_tmp = np.transpose(\
