@@ -1,4 +1,4 @@
-# Two-stream Action Reconition SOC 💪
+# Two-stream Action Reconition SOC 🎬
 ###### tags: `powerchip` `ntu` `netdb`
 ![](https://img.shields.io/static/v1?label=Zynq_UltraScale+&message=zcu102&color=purple)
 ![](https://img.shields.io/static/v1?label=Board_OS&message=pynq&color=red)
@@ -35,3 +35,4 @@ cowork power-chips
 #### run hls cnn
 > make hls
 ```
+
