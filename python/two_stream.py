@@ -43,13 +43,15 @@ class Two_stream(object):
         
         # {'spatial':mp.Array('i', 101), 'temporal':mp.Array('i', 101)}
         self.output = mp.Array(ctypes.c_float, 101*2)
+        
+        self.delay_list = []
                 
-    def spatial_job(self, input_frame, output):
-        out = self.model_spatial(input_frame)
+    def spatial_job(self, input_frame, output):        
+        out = self.model_spatial(input_frame)        
         self.output[:101] = out
-    
+            
     def temporal_job(self, input_frame, old_frame, output):
-        temp_frame = self.feature_bank.get_np_arr()
+        temp_frame = self.feature_bank.get_np_arr()        
         out = self.model_temporal(temp_frame[:,:,:20]) ######### TODO: #########
         self.output[101:] = out
             

@@ -1,7 +1,9 @@
 
 python/LK_optical_flow/files/output
 
+*.avi
 *.dat
+*.pyc
 .ipynb_checkpoints
 __pycache__
 

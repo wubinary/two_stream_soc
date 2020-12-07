@@ -55,12 +55,13 @@ def your_model(capture_frame):
     pred_result = np.random.randint(65535)
     return pred_result
 
+font = ImageFont.truetype("LK_optical_flow/files/Arial.ttf", 18)
 def show_frame(capture_frame, pred_result, fps, show_meta, topk=None):
     
-    font = ImageFont.load_default()
+    #font = ImageFont.load_default()
     h, w, _ = capture_frame.shape
     if show_meta:
-        capture_frame[h-20:, :, :] = 0
+        capture_frame[h-23:, :, :] = 0
     
     # predict value to string
     topk_class = []
@@ -71,12 +72,12 @@ def show_frame(capture_frame, pred_result, fps, show_meta, topk=None):
     topk_class.sort()
     for c in topk_class:
         class_str += f"{c} "
-    result = f'result: {pred_result} score: {pred_result} fps:{"{:.1f}".format(fps)} actions:{class_str}'
+    result = f' fps:{"{:.1f}".format(fps)}, Actions: {class_str}'
 
     frame = PIL.Image.fromarray(capture_frame)
     if show_meta:
         draw = ImageDraw.Draw(frame)
-        draw.text((10,h-15), result, (255,255,255), font=font)
+        draw.text((10,h-23), result, (255,255,0), font=font)
     return frame
 
 def showarray(capture_frame, fps=0, fmt='jpeg', show_meta=True, topk=None):    
